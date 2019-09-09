@@ -127,7 +127,6 @@ if (require.main !== module) {
     sed("./README.md", /action-starter/g, result.app);
     sed("./action.yml", /action-starter/g, result.app);
     sed("./src/index.ts", /action-starter/g, result.app);
-    sed("./.github/workflows/ci-build.yml", /npm install/, "npm ci");
     return result;
   }).then((result) => {
     // delete old git repo and initialize a new one.
@@ -188,6 +187,6 @@ if (require.main !== module) {
       console.error(err);
       process.exit(-1);
     });
-} else {
+} else if (!isSourceRepo){
   console.error(`Usage: .reinit <preinstall|postinstall>.\n Missing required argument`);
 }

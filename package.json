@@ -138,7 +138,6 @@
     ],
     "pre-commit-hook": [
       "check-coverage",
-      "webpack",
       "dep-check",
       "pkg-ok",
       "staged-mods-ok"
