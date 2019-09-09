@@ -31,7 +31,7 @@ Support for the following is baked in:
 ## Usage
 
 ```bash
-npx degit https://github.com/tufan-io/action-starter my-github-action
+npx degit tufan-io/action-starter my-github-action
 cd my-github-action
 npm install
 ```
@@ -39,7 +39,7 @@ or
 
 ```bash
 npm install degit -g
-degit https://github.com/tufan-io/action-starter my-github-action
+degit tufan-io/action-starter my-github-action
 cd my-github-action
 npm install
 ```
