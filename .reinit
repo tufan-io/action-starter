@@ -67,17 +67,17 @@ function rimraf(dir) {
     });
     fs.rmdirSync(dir);
   }
-};
+}
 
-function spawn(cmd, args, opts) {
+function spawn(_cmd, args, opts) {
   opts = opts || {
     cwd: process.cwd(),
     stdio: "inherit",
   };
   // tslint:disable-next-line: no-console
-  console.log([cmd].concat(args).join(" "));
+  console.log([_cmd].concat(args).join(" "));
   return new Promise((resolve, reject) => {
-    const proc = cp.spawn(cmd, args, opts);
+    const proc = cp.spawn(_cmd, args, opts);
     proc.on("close", (code) => {
       code ? reject(code) : resolve();
     });
