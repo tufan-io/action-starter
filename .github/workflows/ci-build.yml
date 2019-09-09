@@ -24,8 +24,7 @@ jobs:
           version: ${{ matrix.node_version }}
       - run: npm ci
       - run: npm run build
-      - description: ensures bundle was create in the build process
+      - if: matrix.os != 'windows-latest'
         # On windows, the file paths are modified, causing CI build failures.
         # For github-actions, it might not be an issue. So we document and leave it alone
-        if: matrix.os != 'windows-latest'
         run: npm run bundled
