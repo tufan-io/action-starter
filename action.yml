@@ -1,0 +1,12 @@
+
+name: action-starter
+description: Another awesome github-action
+author: tufan-io
+inputs:
+  name:
+    description: describe the purpose of name
+    required: false
+    default: null
+runs:
+  using: node12
+  main: ./index.bundle.js
