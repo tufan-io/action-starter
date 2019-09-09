@@ -133,6 +133,8 @@ if (require.main !== module) {
       return spawn("git", ["init"]).then(() => result);
     }).then((result) => {
       return spawn("git", ["add", "."]).then(() => result);
+    }).then((result) => {
+      process.exit(0);
     }).catch((err) => {
       // tslint:disable: no-console
       console.error(err);
