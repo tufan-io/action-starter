@@ -1,5 +1,7 @@
 # @tufan/action-starter
 
+[![Build Status](https://github.com/tufan-io/action-starter/workflows/ci-build/badge.svg)](https://github.com/tufan-io/action-starter/actions)
+
 <!--
 
 [![Build status](https://tufan-io.github.io/action-starter/ci/badge/build.svg)](https://github.com/tufan-io/action-starter/actions)
