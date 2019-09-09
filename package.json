@@ -25,6 +25,7 @@
   },
   "scripts": {
     "build": "npm-run-batch",
+    "bundled": "npm-run-batch",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "check": "npm outdated",
     "check-coverage": "nyc check-coverage --lines 100 --functions 100 --branches 100 --statements 100",
@@ -129,6 +130,10 @@
       "test",
       "webpack",
       "todos"
+    ],
+    "bundled": [
+      "webpack",
+      "no-mods"
     ],
     "qt": [
       "clean",
