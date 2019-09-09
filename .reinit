@@ -69,6 +69,7 @@ function spawn(cmd, args, opts) {
     cwd: process.cwd(),
     stdio: "inherit",
   };
+  // tslint:disable-next-line: no-console
   console.log([cmd].concat(args).join(" "));
   return new Promise((resolve, reject) => {
     const proc = cp.spawn(cmd, args, opts);
@@ -80,101 +81,112 @@ function spawn(cmd, args, opts) {
 
 const isSourceRepo = path.basename(__dirname) === pkgJson.name.split("/").pop();
 
+const [exe, script, cmd, ...rest] = process.argv;
 // tslint:disable-next-line: no-use-before-declare
 if (require.main !== module) {
   // this file is being included as a library
   // export the utility functions defined within
   module.exports = {
-    resetPackageJson: resetPackageJsonPreInstall,
+    resetPackageJsonPostInstall,
+    resetPackageJsonPreInstall,
     rimraf,
     sed,
     spawn,
   };
-} else if (!isSourceRepo) {
-  const [_exe, _script, cmd, ..._rest] = process.argv;
-  if (cmd === "preinstall") {
-    // this is the purpose
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
+} else if (!isSourceRepo && cmd === "preinstall") {
+  // this is the purpose
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
 
-    // defaults
-    const result = {
-      app: `@tufan-io/${path.basename(process.cwd())}`,
-      org: "tufan-io",
-    };
+  // defaults
+  const result = {
+    app: `@tufan-io/${path.basename(process.cwd())}`,
+    org: "tufan-io",
+  };
 
-    // tslint:disable: no-shadowed-variable
-    return new Promise((resolve, reject) => {
-      // Q1 ----
-      rl.question(`Git organization (${result.org}): `, (answer1) => {
-        result.org = answer1 || result.org;
-        // Q2 ----
-        rl.question(`Name of the project (@${result.org}/${result.app.replace(/.*\//, "")}): `, (answer2) => {
-          result.app = answer2 || `@${result.org}/${result.app.replace(/.*\//, "")}`;
-          return resolve(result);
-        });
+  // tslint:disable: no-shadowed-variable
+  return new Promise((resolve, reject) => {
+    // Q1 ----
+    rl.question(`Git organization (${result.org}): `, (answer1) => {
+      result.org = answer1 || result.org;
+      // Q2 ----
+      rl.question(`Name of the project (@${result.org}/${result.app.replace(/.*\//, "")}): `, (answer2) => {
+        result.app = answer2 || `@${result.org}/${result.app.replace(/.*\//, "")}`;
+        return resolve(result);
       });
-    }).then((result) => {
-      result.app = result.app.replace(/.*\//, "");
-      resetPackageJsonPreInstall(result);
-      // reset changelog.md
-      fs.writeFileSync("CHANGELOG.md", "", "utf8");
-      sed("./README.md", /tufan-io/g, result.org);
-      sed("./README.md", /action-starter/g, result.app);
-      return result;
-    }).then((result) => {
-      // delete old git repo and initialize a new one.
-      rimraf(path.join(process.cwd(), ".git"));
-      return result;
-    }).then((result) => {
-      // initialize new git repo
-      return spawn("git", ["init"]).then(() => result);
-    }).then((result) => {
-      return spawn("git", ["add", "."]).then(() => result);
-    }).then((result) => {
+    });
+  }).then((result) => {
+    result.app = result.app.replace(/.*\//, "");
+    resetPackageJsonPreInstall(result);
+    fs.writeFileSync("./.reinit-lock", JSON.stringify(result), "utf8");
+    // reset changelog.md
+    fs.writeFileSync("CHANGELOG.md", "", "utf8");
+    sed("./README.md", /tufan-io/g, result.org);
+    sed("./README.md", /action-starter/g, result.app);
+    sed("./action.yml", /action-starter/g, result.app);
+    sed("./src/index.ts", /action-starter/g, result.app);
+    return result;
+  }).then((result) => {
+    // delete old git repo and initialize a new one.
+    rimraf(path.join(process.cwd(), ".git"));
+    return result;
+  }).then((result) => {
+    // initialize new git repo
+    return spawn("git", ["init"]).then(() => result);
+  }).then((result) => {
+    return spawn("git", ["add", "."]).then(() => result);
+  }).then((result) => {
+    process.exit(0);
+  }).catch((err) => {
+    // tslint:disable: no-console
+    console.error(err);
+    process.exit(-1);
+  });
+} else if (isSourceRepo && cmd === "postinstall") {
+  // need to split pre and post install here.
+  return new Promise((res, rej) => {
+    try {
+      const raw = fs.readFileSync("./.reinit-lock", "utf8");
+      const pkg = JSON.parse(raw);
+      res(pkg);
+    } catch (err) {
+      rej(`Invoked '.reinit postinstall' without a './.reinit-lock' present.`);
+    }
+  }).then(resetPackageJsonPostInstall)
+    .then((pkg) => {
+      fs.unlinkSync(".reinit");
+      fs.unlinkSync(".reinit-lock");
+      return pkg;
+    })
+    .then((pkg) => {
+      return spawn(`npm`, [`run`, `build`]).then(() => pkg);
+    }).then((pkg) => {
+      return spawn(`git`, [`add`, `.`, `--all`]).then(() => pkg);
+    }).then((pkg) => {
+      return spawn(`git`, [
+        `remote`,
+        `add`,
+        `origin`,
+        pkg.repository.url,
+      ]).then(() => pkg);
+    }).then((pkg) => {
+      console.log(``);
+      console.log(`TODO: configure git username and email before committing`);
+      console.log(``);
+      console.log(`    git config user.name \"John Doe\"`);
+      console.log(`    git config user.email john@doe.com`);
+      console.log(``);
+      console.log(`---`);
+      console.log(`The repo has been properly re-initialized.`);
+      console.log(`Go forth and make a brave new npm package...`);
+      console.log(`---`);
       process.exit(0);
     }).catch((err) => {
-      // tslint:disable: no-console
       console.error(err);
       process.exit(-1);
     });
-  } else if (cmd === "postinstall") {
-    // need to split pre and post install here.
-    return new Promise.resolve(resetPackageJsonPostInstall())
-      .then((pkg) => {
-        fs.unlinkSync(".reinit");
-        return pkg;
-      })
-      .then((pkg) => {
-        return spawn(`npm`, [`run`, `build`]).then(() => pkg);
-      }).then((pkg) => {
-        return spawn(`git`, [`add`, `.`, `--all`]).then(() => pkg);
-      }).then((pkg) => {
-        return spawn(`git`, [
-          `remote`,
-          `add`,
-          `origin`,
-          pkg.repository.url,
-        ]).then(() => pkg);
-      }).then((pkg) => {
-        console.log(``);
-        console.log(`TODO: configure git username and email before committing`);
-        console.log(``);
-        console.log(`    git config user.name \"John Doe\"`);
-        console.log(`    git config user.email john@doe.com`);
-        console.log(``);
-        console.log(`---`);
-        console.log(`The repo has been properly re-initialized.`);
-        console.log(`Go forth and make a brave new npm package...`);
-        console.log(`---`);
-        process.exit(0);
-      }).catch((err) => {
-        console.error(err);
-        process.exit(-1);
-      });
-  } else {
-    console.error(`Usage: .reinit <preinstall|postinstall>.\n Missing required argument`);
-  }
+} else {
+  console.error(`Usage: .reinit <preinstall|postinstall>.\n Missing required argument`);
 }
