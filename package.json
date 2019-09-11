@@ -52,7 +52,8 @@
     "test": "cross-env NODE_ENV=test nyc -r lcov -r text-summary -r json-summary ava --verbose",
     "test-no-cover": "cross-env NODE_ENV=test ava --verbose",
     "todos": "leasot --exit-nicely --skip-unsupported ./src",
-    "webpack": "webpack --config ./webpack.config.js --display-modules"
+    "webpack": "webpack --config ./webpack.config.js --hide-modules",
+    "webpack-v": "webpack --config ./webpack.config.js --display-modules"
   },
   "husky": {
     "hooks": {
